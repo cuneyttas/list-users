@@ -16,50 +16,24 @@ add_action('rest_api_init', function () {
 
 // User listesi için jsonplaceholder'a istek atıp cevabı döndürüldü (https://jsonplaceholder.typicode.com/users)
 function ulapi_get_user_list() {
+  // Önbelleğe alınmış veriyi kontrol edin
+  $cached_users = get_transient( 'ulapi_user_list' );
+
+  // Önbellekte veri varsa, onu kullan
+  if ( false !== $cached_users ) {
+      return $cached_users;
+  }
+
+  // Önbellekte veri yoksa, API çağrısını yapın ve sonucu alın
   $result = ulapi_send_api_request("/users");
+
+  // API çağrısı başarılıysa, veriyi önbelleğe alın
+  if ( $result ) {
+      set_transient( 'ulapi_user_list', $result, HOUR_IN_SECONDS ); // Örnek olarak bir saat boyunca önbelleğe alındı
+  }
+
   return $result;
 }
-
-
-
-// Veriyi al ve önbelleğe koy
-function user_set_transient() {
-  $data = ulapi_get_user_list();
-
-  if ( $data ) {
-      set_transient( 'cache_user_list', $data, 1 * HOUR_IN_SECONDS ); // Veriyi bir saat boyunca önbelleğe al
-  }
-}
-// Veriyi önbellekten al
-function user_get_data() {
-  $data = get_transient( 'cache_user_list' );
-
-  if ( false === $data ) {
-      // Önbellekte veri yok, veriyi al ve önbelleğe koy
-      $data = ulapi_get_user_list();
-      if ( $data ) {
-          set_transient( 'cache_user_list', $data, 1 * HOUR_IN_SECONDS ); // Veriyi bir saat boyunca önbelleğe al
-      }
-  }
-
-  return $data;
-}
-// Örneğin çalıştırılması
-function user_call_function() {
-  $data = user_get_data();
-
-  if ( $data ) {
-      // Veriyi kullan
-      echo $data;
-  } else {
-      // Veri alınamadı
-      echo 'Veri alınamadı.';
-  }
-}
-
-
-
-
 
 // User detay datası için custom endpoint oluşturuldu
 add_action('rest_api_init', function () {
@@ -71,8 +45,25 @@ add_action('rest_api_init', function () {
 
 // Detaylar için jsonplaceholder'a istek atıp cevabı döndürüldü (https://jsonplaceholder.typicode.com/users/id)
 function ulapi_get_user_detail($data) {
+
   $user_id = $data['id'];
+
+  // Önbelleğe alınmış veriyi kontrol edin
+  $cached_users = get_transient( "ulapi_user_info_$user_id" );
+
+  // Önbellekte veri varsa, onu kullan
+  if ( false !== $cached_users ) {
+      return $cached_users;
+  }
+
+  // Önbellekte veri yoksa, API çağrısını yapın ve sonucu alın
   $result = ulapi_send_api_request("/users/$user_id");
+
+  // API çağrısı başarılıysa, veriyi önbelleğe alın
+  if ( $result ) {
+      set_transient( 'ulapi_user_info', $result, HOUR_IN_SECONDS ); // Örnek olarak bir saat boyunca önbelleğe alındı
+  }
+
   return $result;
 }
 
